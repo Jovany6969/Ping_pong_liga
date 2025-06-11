@@ -46,10 +46,17 @@
 
     #match-tables-container {
   display: grid;
-  grid-template-columns: repeat(4, 1fr); /* Max 4 tabuľky v jednom riadku */
+  grid-template-columns: repeat(4, 1fr); /* 4 tabuľky vedľa seba na veľkých obrazovkách */
   gap: 16px;
   justify-content: center;
 }
+
+@media (max-width: 1000px) {
+  #match-tables-container {
+    grid-template-columns: repeat(2, 1fr); /* 2 tabuľky vedľa seba na menších obrazovkách */
+  }
+}
+
 
     .player-table {
       background-color: #ffffff;
