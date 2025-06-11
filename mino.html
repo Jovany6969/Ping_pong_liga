@@ -2,8 +2,9 @@
 <html lang="sk">
 <head>
   <meta charset="UTF-8" />
-  <title>Pingpong - Alex</title>
+  <title>Pingpong Liga - Miňo</title>
   <style>
+    /* Štýly ostávajú rovnaké ako predtým */
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background-color: #f2f2f2;
@@ -45,18 +46,17 @@
     }
 
     #match-tables-container {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr); /* 4 tabuľky vedľa seba na veľkých obrazovkách */
-  gap: 16px;
-  justify-content: center;
-}
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      justify-content: center;
+    }
 
-@media (max-width: 1000px) {
-  #match-tables-container {
-    grid-template-columns: repeat(2, 1fr); /* 2 tabuľky vedľa seba na menších obrazovkách */
-  }
-}
-
+    @media (max-width: 1000px) {
+      #match-tables-container {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
 
     .player-table {
       background-color: #ffffff;
@@ -101,33 +101,32 @@
     }
 
     .stats-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 20px;
-  background-color: #f2f2f2;
-  padding: 16px;
-  border-radius: 12px;
-  margin-bottom: 30px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-}
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      background-color: #f2f2f2;
+      padding: 16px;
+      border-radius: 12px;
+      margin-bottom: 30px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
 
-.stat-box {
-  background-color: #c8d8e4;
-  color: #2b6777;
-  padding: 12px 16px;
-  border-radius: 10px;
-  flex: 1 1 180px;
-  text-align: center;
-  font-weight: bold;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-}
+    .stat-box {
+      background-color: #c8d8e4;
+      color: #2b6777;
+      padding: 12px 16px;
+      border-radius: 10px;
+      text-align: center;
+      font-weight: bold;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
 
-.stat-box span {
-  display: block;
-  font-size: 1.5em;
-  margin-top: 6px;
-  color: #52ab98;
-}
+    .stat-box span {
+      display: block;
+      font-size: 1.5em;
+      margin-top: 6px;
+      color: #52ab98;
+    }
   </style>
 </head>
 <body>
@@ -145,130 +144,128 @@
     <div class="stat-box">Prehry:<span id="losses">0</span></div>
     <div class="stat-box">Získané sety:<span id="sets-won">0</span></div>
     <div class="stat-box">Stratené sety:<span id="sets-lost">0</span></div>
+    <div class="stat-box">Aktuálne poradie:<span id="current-rank">-</span></div>
   </div>
 
-<h2>Zápasy podľa súperov</h2>
-<div id="match-tables-container"></div>
+  <h2>Zápasy podľa súperov</h2>
+  <div id="match-tables-container"></div>
 
-<h2>Záznam zápasov</h2>
-<table id="match-log">
-  <tr><th>Dátum</th><th>Súper</th><th>Výsledok</th><th>Získané sety</th><th>Stratené sety</th></tr>
-</table>
+  <h2>Záznam zápasov</h2>
+  <table id="match-log">
+    <tr><th>Dátum</th><th>Súper</th><th>Výsledok</th><th>Získané sety</th><th>Stratené sety</th></tr>
+  </table>
 
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getFirestore, collection, doc, setDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, collection, doc, setDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyCGoPGuHmIFnkUt6hNrY7ub8UkVV5OfIbQ",
-    authDomain: "pingpong-liga.firebaseapp.com",
-    projectId: "pingpong-liga",
-    storageBucket: "pingpong-liga.firebasestorage.app",
-    messagingSenderId: "794504343671",
-    appId: "1:794504343671:web:3a6aac20c7e2b5360c1672",
-    measurementId: "G-YXH16NEPY2"
-  };
+    const firebaseConfig = {
+      apiKey: "AIzaSyCGoPGuHmIFnkUt6hNrY7ub8UkVV5OfIbQ",
+      authDomain: "pingpong-liga.firebaseapp.com",
+      projectId: "pingpong-liga",
+      storageBucket: "pingpong-liga.firebasestorage.app",
+      messagingSenderId: "794504343671",
+      appId: "1:794504343671:web:3a6aac20c7e2b5360c1672",
+      measurementId: "G-YXH16NEPY2"
+    };
 
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
-  const playerName = 'Miňo';
-  const opponents = ["Alex", "Maxo", "Jašo",  "Pali", "Kali", "Erik", "Doky", "Pišta"];
-  const container = document.getElementById("match-tables-container");
+    const playerName = 'Miňo';
+    const opponents = ["Alex", "Maxo", "Jašo", "Pali", "Kali", "Erik", "Doky", "Pišta"];
+    const container = document.getElementById("match-tables-container");
 
-  // Vytvorenie tabuliek pre každého súpera (rovnako ako pôvodne)
-  opponents.forEach(opponent => {
-    const table = document.createElement("table");
-    table.classList.add("player-table");
-    table.innerHTML = `
-      <caption>${opponent}</caption>
-      <tr>
-        <th>Dátum</th>
-        <th>Výsledok (výhry:prehry)</th>
-      </tr>
-    `;
-    for (let i = 1; i <= 4; i++) {
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td><input type="date" data-opponent="${opponent}" data-match="${i}"></td>
-        <td><input type="text" data-opponent="${opponent}" data-match="${i}" placeholder="napr. 3:1"></td>
+    opponents.forEach(opponent => {
+      const table = document.createElement("table");
+      table.classList.add("player-table");
+      table.innerHTML = `
+        <caption>${opponent}</caption>
+        <tr>
+          <th>Dátum</th>
+          <th>Výsledok (výhry:prehry)</th>
+        </tr>
       `;
-      table.appendChild(tr);
-    }
-    container.appendChild(table);
-  });
-
-  async function saveData() {
-    const inputs = document.querySelectorAll("input[type='text']");
-    for (const input of inputs) {
-      const opponent = input.dataset.opponent;
-      const match = input.dataset.match;
-      const dateInput = document.querySelector(`input[type='date'][data-opponent='${opponent}'][data-match='${match}']`);
-      const key = `${opponent}-${match}`;
-      await setDoc(doc(db, "matches", `${playerName}_${key}`), {
-        player: playerName,
-        opponent,
-        match: Number(match),
-        date: dateInput.value,
-        result: input.value
-      });
-    }
-    await loadData();
-  }
-
-  async function loadData() {
-    const log = document.getElementById("match-log");
-    // Vymaž staré riadky okrem hlavičky
-    log.querySelectorAll("tr:not(:first-child)").forEach(tr => tr.remove());
-
-    let matches = 0, wins = 0, losses = 0, setsWon = 0, setsLost = 0;
-
-    const querySnapshot = await getDocs(collection(db, "matches"));
-    const data = {};
-    querySnapshot.forEach(docSnap => {
-      const d = docSnap.data();
-      if (d.player === playerName) {
-        const key = `${d.opponent}-${d.match}`;
-        data[key] = d;
-      }
-    });
-
-    // Naplni inputy a vypočítaj štatistiky
-    for (const key in data) {
-      const entry = data[key];
-      const textInput = document.querySelector(`input[type='text'][data-opponent='${entry.opponent}'][data-match='${entry.match}']`);
-      const dateInput = document.querySelector(`input[type='date'][data-opponent='${entry.opponent}'][data-match='${entry.match}']`);
-      if (textInput) textInput.value = entry.result || '';
-      if (dateInput) dateInput.value = entry.date || '';
-
-      if (entry.result && entry.result.match(/^\d+:\d+$/)) {
-        const [won, lost] = entry.result.split(":").map(Number);
-        matches++;
-        setsWon += won;
-        setsLost += lost;
-        if (won > lost) wins++;
-        else losses++;
-
+      for (let i = 1; i <= 4; i++) {
         const tr = document.createElement("tr");
-        tr.innerHTML = `<td>${entry.date}</td><td>${entry.opponent}</td><td>${entry.result}</td><td>${won}</td><td>${lost}</td>`;
-        log.appendChild(tr);
+        tr.innerHTML = `
+          <td><input type="date" data-opponent="${opponent}" data-match="${i}"></td>
+          <td><input type="text" data-opponent="${opponent}" data-match="${i}" placeholder="napr. 3:1"></td>
+        `;
+        table.appendChild(tr);
       }
+      container.appendChild(table);
+    });
+
+    async function saveData() {
+      const inputs = document.querySelectorAll("input[type='text']");
+      for (const input of inputs) {
+        const opponent = input.dataset.opponent;
+        const match = input.dataset.match;
+        const dateInput = document.querySelector(`input[type='date'][data-opponent='${opponent}'][data-match='${match}']`);
+        const key = `${opponent}-${match}`;
+        await setDoc(doc(db, "matches", `${playerName}_${key}`), {
+          player: playerName,
+          opponent,
+          match: Number(match),
+          date: dateInput.value,
+          result: input.value
+        });
+      }
+      await loadData();
     }
 
-    document.getElementById("matches-played").textContent = matches;
-    document.getElementById("wins").textContent = wins;
-    document.getElementById("losses").textContent = losses;
-    document.getElementById("sets-won").textContent = setsWon;
-    document.getElementById("sets-lost").textContent = setsLost;
-  }
+    async function loadData() {
+      const log = document.getElementById("match-log");
+      log.querySelectorAll("tr:not(:first-child)").forEach(tr => tr.remove());
 
-  window.onload = async () => {
-    await loadData();
-    document.querySelectorAll("input").forEach(input => {
-      input.addEventListener("input", saveData);
-    });
-  };
-</script>
+      let matches = 0, wins = 0, losses = 0, setsWon = 0, setsLost = 0;
 
+      const querySnapshot = await getDocs(collection(db, "matches"));
+      const data = {};
+      querySnapshot.forEach(docSnap => {
+        const d = docSnap.data();
+        if (d.player === playerName) {
+          const key = `${d.opponent}-${d.match}`;
+          data[key] = d;
+        }
+      });
+
+      for (const key in data) {
+        const entry = data[key];
+        const textInput = document.querySelector(`input[type='text'][data-opponent='${entry.opponent}'][data-match='${entry.match}']`);
+        const dateInput = document.querySelector(`input[type='date'][data-opponent='${entry.opponent}'][data-match='${entry.match}']`);
+        if (textInput) textInput.value = entry.result || '';
+        if (dateInput) dateInput.value = entry.date || '';
+
+        if (entry.result && entry.result.match(/^\d+:\d+$/)) {
+          const [won, lost] = entry.result.split(":").map(Number);
+          matches++;
+          setsWon += won;
+          setsLost += lost;
+          if (won > lost) wins++;
+          else losses++;
+
+          const tr = document.createElement("tr");
+          tr.innerHTML = `<td>${entry.date}</td><td>${entry.opponent}</td><td>${entry.result}</td><td>${won}</td><td>${lost}</td>`;
+          log.appendChild(tr);
+        }
+      }
+
+      document.getElementById("matches-played").textContent = matches;
+      document.getElementById("wins").textContent = wins;
+      document.getElementById("losses").textContent = losses;
+      document.getElementById("sets-won").textContent = setsWon;
+      document.getElementById("sets-lost").textContent = setsLost;
+      document.getElementById("current-rank").textContent = 3;
+    }
+
+    window.onload = async () => {
+      await loadData();
+      document.querySelectorAll("input").forEach(input => {
+        input.addEventListener("input", saveData);
+      });
+    };
+  </script>
 </body>
 </html>
