@@ -48,16 +48,22 @@
     }
 
     ul li a {
-      text-decoration: none;
-      color: #52ab98;
-      font-weight: bold;
-      font-size: 1.1em;
-      transition: color 0.3s;
-    }
+  text-decoration: none;
+  color: #ffffff;
+  background-color: #52ab98;
+  font-weight: 600;
+  font-size: 1.05em;
+  padding: 6px 14px;
+  border-radius: 8px;
+  transition: background-color 0.3s, transform 0.2s;
+  display: inline-block;
+}
 
-    ul li a:hover {
-      color: #2b6777;
-    }
+ul li a:hover {
+  background-color: #2b6777;
+  transform: scale(1.05);
+}
+
 
     table {
       margin: 0 auto 40px auto;
@@ -151,10 +157,10 @@
   <h1>Pingpong Liga</h1>
 </header>
 
-<h3>Odkazy na zadávanie výsledkov</h3>
+<h2>Odkazy na zadávanie výsledkov</h2>
 <ul>
   <li><a href="alex.html">Alex</a></li>
-  <li><a href="maxo.html">Maxo</a></li>
+  <li><a href="maxo.html">Max</a></li>
   <li><a href="jaso.html">Jašo</a></li>
   <li><a href="mino.html">Miňo</a></li>
   <li><a href="pali.html">Pali</a></li>
@@ -202,7 +208,7 @@
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
 
-  const players = ["Alex", "Maxo", "Jašo", "Miňo", "Pali", "Kali", "Erik", "Doky", "Pišta"];
+  const players = ["Alex", "Max", "Jašo", "Miňo", "Pali", "Kali", "Erik", "Doky", "Pišta"];
 
   async function loadLeaderboard() {
     const leaderboard = [];
