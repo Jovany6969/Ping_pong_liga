@@ -175,7 +175,6 @@
     const opponents = ["Max", "Jašo", "Miňo", "Pali", "Kali", "Erik", "Doky", "Pišta"];
     const container = document.getElementById("match-tables-container");
 
-    // Vytvorenie tabuliek pre každého súpera
     opponents.forEach(opponent => {
       const table = document.createElement("table");
       table.classList.add("player-table");
@@ -217,22 +216,32 @@
 
     async function loadData() {
       const log = document.getElementById("match-log");
-      // Vymaž staré riadky okrem hlavičky
       log.querySelectorAll("tr:not(:first-child)").forEach(tr => tr.remove());
 
       let matches = 0, wins = 0, losses = 0, setsWon = 0, setsLost = 0;
+      const allPlayerStats = {};
 
       const querySnapshot = await getDocs(collection(db, "matches"));
       const data = {};
       querySnapshot.forEach(docSnap => {
         const d = docSnap.data();
+        if (!allPlayerStats[d.player]) {
+          allPlayerStats[d.player] = { wins: 0, setsWon: 0 };
+        }
+        if (d.result && d.result.match(/^\d+:\d+$/)) {
+          const [w, l] = d.result.split(":").map(Number);
+          allPlayerStats[d.player].setsWon += w;
+          if (w > l) {
+            allPlayerStats[d.player].wins += 1;
+          }
+        }
+
         if (d.player === playerName) {
           const key = `${d.opponent}-${d.match}`;
           data[key] = d;
         }
       });
 
-      // Naplni inputy a vypočítaj štatistiky
       for (const key in data) {
         const entry = data[key];
         const textInput = document.querySelector(`input[type='text'][data-opponent='${entry.opponent}'][data-match='${entry.match}']`);
@@ -260,9 +269,13 @@
       document.getElementById("sets-won").textContent = setsWon;
       document.getElementById("sets-lost").textContent = setsLost;
 
-      // Výpočet aktuálneho poradia (príklad)
-      const currentRank = 3; // môžeš to získať z databázy
-      document.getElementById("current-rank").textContent = currentRank;
+      // Výpočet aktuálneho poradia
+      const sortedPlayers = Object.entries(allPlayerStats)
+        .sort((a, b) => b[1].wins - a[1].wins || b[1].setsWon - a[1].setsWon)
+        .map(entry => entry[0]);
+
+      const currentRank = sortedPlayers.indexOf(playerName) + 1;
+      document.getElementById("current-rank").textContent = currentRank || "-";
     }
 
     window.onload = async () => {
