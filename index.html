@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html> 
 <html lang="sk">
 <head>
   <meta charset="UTF-8" />
@@ -48,22 +48,21 @@
     }
 
     ul li a {
-  text-decoration: none;
-  color: #ffffff;
-  background-color: #52ab98;
-  font-weight: 600;
-  font-size: 1.05em;
-  padding: 6px 14px;
-  border-radius: 8px;
-  transition: background-color 0.3s, transform 0.2s;
-  display: inline-block;
-}
+      text-decoration: none;
+      color: #ffffff;
+      background-color: #52ab98;
+      font-weight: 600;
+      font-size: 1.05em;
+      padding: 6px 14px;
+      border-radius: 8px;
+      transition: background-color 0.3s, transform 0.2s;
+      display: inline-block;
+    }
 
-ul li a:hover {
-  background-color: #2b6777;
-  transform: scale(1.05);
-}
-
+    ul li a:hover {
+      background-color: #2b6777;
+      transform: scale(1.05);
+    }
 
     table {
       margin: 0 auto 40px auto;
@@ -181,7 +180,7 @@ ul li a:hover {
   </tr>
 </table>
 
-<h2>Posledných 5 odohraných zápasov</h2>
+<h2>Posledných 15 odohraných zápasov</h2>
 <table id="recent-matches-table">
   <tr>
     <th>Dátum</th>
@@ -252,7 +251,6 @@ ul li a:hover {
     leaderboard.sort((a, b) => b.setsWon - a.setsWon);
 
     const table = document.getElementById('leaderboard-table');
-    // odstráni všetky riadky okrem hlavičky
     table.querySelectorAll('tr:not(:first-child)').forEach(tr => tr.remove());
 
     leaderboard.forEach(({ player, setsWon, wins, losses }, index) => {
@@ -296,12 +294,12 @@ ul li a:hover {
       table.appendChild(tr);
     });
 
-    // Posledných 5 zápasov
+    // Posledných 15 zápasov
     recentMatches.sort((a, b) => new Date(b.date) - new Date(a.date));
     const recentTable = document.getElementById('recent-matches-table');
     recentTable.querySelectorAll('tr:not(:first-child)').forEach(tr => tr.remove());
 
-    recentMatches.slice(0, 5).forEach(match => {
+    recentMatches.slice(0, 15).forEach(match => {
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td>${match.date}</td>
