@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Pingpong - Centrálny zápis</title>
+  <link rel="stylesheet" href="style.css">
+  
+  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+  <header>
+    <img src="logo2.png" alt="Logo ligy">
+    <h1>Pingpong Liga</h1>
+  </header>
+
+  <div class="match-form">
+    <input type="date" id="match-date">
+    <select id="player1"></select>
+    
+    <div class="score-inputs">
+      <select id="score1" class="score-dropdown">
+        <option value="" disabled selected>-</option>
+        <option value="0">0</option>
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+      </select>
+      
+      <span style="font-weight: bold; font-size: 1.2em; color: #7f8c8d;">:</span>
+      
+      <select id="score2" class="score-dropdown">
+        <option value="" disabled selected>-</option>
+        <option value="0">0</option>
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+      </select>
+    </div>
+    
+    <select id="player2"></select>
+    <button class="btn-save" id="save-btn" onclick="saveMatch()">Uložiť výsledok</button>
+  </div>
+
+  <ul class="player-links" id="player-links-container"></ul>
+
+  <div style="text-align: center; margin-bottom: 40px; display: flex; flex-direction: column; gap: 15px; align-items: center;">
+    <a href="historia.html" class="weather-btn" style="background-color: var(--primary);">📜 Zobraziť celú históriu a filtre</a>
+    <a href="pocasie.html" class="weather-btn">☁️ Pozrieť počasie a vietor 🌪️</a>
+  </div>
+
+  <h2>Celkové poradie</h2>
+  <div class="table-wrapper">
+    <table id="leaderboard-table" class="main-table">
+      <thead>
+        <tr>
+          <th class="player-name-col">HRÁČ</th>
+          <th class="sets-col">ZÍSKANÉ SETY</th>
+          <th class="wins-col">VÝHRY</th>
+          <th class="losses-col">PREHRY</th>
+          <th class="forma-col">FORMA</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <h2>Posledné zápasy</h2>
+  <div class="table-wrapper">
+    <table id="recent-matches-table" class="main-table">
+      <thead>
+        <tr>
+          <th>Dátum</th>
+          <th>Zápas</th>
+          <th>Skóre</th>
+          <th>Akcia</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <button class="btn-reset-all" onclick="resetAllData()">⚠️ Vymazať všetky výsledky</button>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyBvjsbk35S43nORNCHfg4AJfVAxp3rr_gg",
+    authDomain: "ligapinec.firebaseapp.com",
+    projectId: "ligapinec",
+    storageBucket: "ligapinec.firebasestorage.app",
+    messagingSenderId: "1005675095277",
+    appId: "1:1005675095277:web:94ed61594ba1d088e1d8e4"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
+  const players = ["Alex", "Maxo", "Jašo", "Miňo", "Pali", "Kali", "Erik", "Pišta"];
+
+  function init() {
+    document.getElementById('match-date').valueAsDate = new Date();
+    const p1Select = document.getElementById('player1');
+    const p2Select = document.getElementById('player2');
+    const linksContainer = document.getElementById('player-links-container');
+    
+    p1Select.innerHTML = '<option value="" disabled selected>Hráč 1</option>';
+    p2Select.innerHTML = '<option value="" disabled selected>Hráč 2</option>';
+    
+    players.forEach(player => {
+      p1Select.add(new Option(player, player));
+      p2Select.add(new Option(player, player));
+      const li = document.createElement('li');
+      li.innerHTML = `<a href="hrac.html?meno=${player}">${player}</a>`;
+      linksContainer.appendChild(li);
+    });
+
+    db.collection("zapas").onSnapshot((snapshot) => {
+      let matchData = {};
+      snapshot.forEach((doc) => {
+        matchData[doc.id] = doc.data();
+      });
+      drawTables(matchData);
+    });
+  }
+
+  async function saveMatch() {
+    const p1 = document.getElementById('player1').value;
+    const p2 = document.getElementById('player2').value;
+    const date = document.getElementById('match-date').value;
+    const s1Value = document.getElementById('score1').value;
+    const s2Value = document.getElementById('score2').value;
+
+    if (!p1 || !p2) { alert("Prosím, vyber oboch hráčov z ponuky!"); return; }
+    if (p1 === p2) { alert("Chyba: Hráč nemôže hrať sám so sebou!"); return; }
+    if (s1Value === "" || s2Value === "") { alert("Prosím, zadaj skóre oboch hráčov."); return; }
+
+    const s1 = parseInt(s1Value);
+    const s2 = parseInt(s2Value);
+
+    const isValidScore = (s1 === 3 && s2 >= 0 && s2 < 3) || (s2 === 3 && s1 >= 0 && s1 < 3);
+    if (!isValidScore) { alert("Neplatný výsledok! Zápas sa hrá na 3 víťazné sety (napr. 3:0, 3:1, 3:2)."); return; }
+
+    const saveBtn = document.getElementById('save-btn');
+    saveBtn.disabled = true;
+    saveBtn.innerText = "Ukladám...";
+
+    const sorted = [p1, p2].sort();
+    const firstPlayer = sorted[0];
+    const secondPlayer = sorted[1];
+    const scoreForFirst = (firstPlayer === p1) ? s1 : s2;
+    const scoreForSecond = (secondPlayer === p2) ? s2 : s1;
+
+    try {
+      const snapshot = await db.collection("zapas").get();
+      let matchData = {};
+      snapshot.forEach(doc => matchData[doc.id] = doc.data());
+
+      let matchNumber = 0;
+      for (let i = 1; i <= 4; i++) {
+        const key = `${firstPlayer}_${secondPlayer}_${i}`;
+        if (!matchData[key]) {
+          matchNumber = i; 
+          break;
+        }
+      }
+
+      if (matchNumber === 0) { 
+        alert(`⚠️ POZOR: Hráči ${p1} a ${p2} už odohrali všetky 4 vzájomné zápasy!`); 
+        saveBtn.disabled = false;
+        saveBtn.innerText = "Uložiť výsledok";
+        return; 
+      }
+
+      const matchKey = `${firstPlayer}_${secondPlayer}_${matchNumber}`;
+      
+      await db.collection("zapas").doc(matchKey).set({
+        date: date, 
+        player1: firstPlayer, 
+        player2: secondPlayer, 
+        score1: scoreForFirst, 
+        score2: scoreForSecond, 
+        timestamp: firebase.firestore.FieldValue.serverTimestamp(), 
+        matchNumber: matchNumber 
+      });
+
+      document.getElementById('player1').selectedIndex = 0;
+      document.getElementById('player2').selectedIndex = 0;
+      document.getElementById('score1').selectedIndex = 0;
+      document.getElementById('score2').selectedIndex = 0;
+
+    } catch (error) {
+      console.error("Chyba pri ukladaní: ", error);
+      alert("Nastala chyba pri pripájaní na server.");
+    } finally {
+      saveBtn.disabled = false;
+      saveBtn.innerText = "Uložiť výsledok";
+    }
+  }
+
+  function drawTables(matchData) {
+    const stats = {};
+    players.forEach(p => stats[p] = { wins: 0, losses: 0, setsWon: 0, setsLost: 0, history: [] });
+    const matchesArray = [];
+
+    for (const key in matchData) {
+      const match = matchData[key];
+      matchesArray.push({ key: key, ...match });
+
+      stats[match.player1].setsWon += match.score1;
+      stats[match.player1].setsLost += match.score2;
+      stats[match.player2].setsWon += match.score2;
+      stats[match.player2].setsLost += match.score1;
+
+      let p1Won = match.score1 > match.score2;
+      let p2Won = match.score2 > match.score1;
+
+      if (p1Won) { stats[match.player1].wins++; stats[match.player2].losses++; } 
+      else if (p2Won) { stats[match.player2].wins++; stats[match.player1].losses++; }
+
+      let time = match.timestamp ? match.timestamp.toMillis() : 0;
+      let dateObj = match.date ? new Date(match.date).getTime() : time; 
+      
+      stats[match.player1].history.push({ won: p1Won, sortTime: dateObj, backupTime: time });
+      stats[match.player2].history.push({ won: p2Won, sortTime: dateObj, backupTime: time });
+    }
+
+    const leaderboard = players.map(player => ({ player, ...stats[player] }));
+    
+    leaderboard.sort((a, b) => {
+      if (b.setsWon !== a.setsWon) return b.setsWon - a.setsWon;
+
+      let aWinsH2H = 0, bWinsH2H = 0, aSetsH2H = 0, bSetsH2H = 0;
+      const sortedNames = [a.player, b.player].sort();
+      for (let i = 1; i <= 4; i++) {
+        const matchKey = `${sortedNames[0]}_${sortedNames[1]}_${i}`;
+        const match = matchData[matchKey];
+        if (match) {
+          let scoreA = match.player1 === a.player ? match.score1 : match.score2;
+          let scoreB = match.player1 === b.player ? match.score1 : match.score2;
+          aSetsH2H += scoreA; bSetsH2H += scoreB;
+          if (scoreA > scoreB) aWinsH2H++;
+          if (scoreB > scoreA) bWinsH2H++;
+        }
+      }
+      
+      if (bWinsH2H !== aWinsH2H) return bWinsH2H - aWinsH2H;
+      if (bSetsH2H !== aSetsH2H) return bSetsH2H - aSetsH2H;
+      if (b.wins !== a.wins) return b.wins - a.wins;
+      return a.player.localeCompare(b.player);
+    });
+
+    const tbody = document.querySelector('#leaderboard-table tbody');
+    tbody.innerHTML = '';
+    
+    leaderboard.forEach((stat, index) => {
+      const tr = document.createElement('tr');
+      if (index === 0) tr.className = "rank-1";
+      if (index === 1) tr.className = "rank-2";
+      if (index === 2) tr.className = "rank-3";
+
+      let medal = "";
+      if (index === 0) medal = " 🥇";
+      if (index === 1) medal = " 🥈";
+      if (index === 2) medal = " 🥉";
+
+      stat.history.sort((a, b) => {
+        if (b.sortTime === a.sortTime) return b.backupTime - a.backupTime;
+        return b.sortTime - a.sortTime;
+      });
+      let last5 = stat.history.slice(0, 5);
+      
+      let formaHtml = `<div class="forma-container">`;
+      last5.forEach(match => {
+        formaHtml += match.won ? `<div class="badge-forma badge-w">W</div>` : `<div class="badge-forma badge-l">L</div>`;
+      });
+      formaHtml += `</div>`;
+
+      tr.innerHTML = `
+        <td><div class="player-info"><div class="player-medal">${medal}</div><div class="player-name"><strong>${stat.player}</strong></div></div></td>
+        <td>${stat.setsWon}</td>
+        <td>${stat.wins}</td>
+        <td>${stat.losses}</td>
+        <td>${formaHtml}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    matchesArray.sort((a, b) => {
+      let timeA = a.timestamp ? a.timestamp.toMillis() : 0;
+      let timeB = b.timestamp ? b.timestamp.toMillis() : 0;
+      let dateA = a.date ? new Date(a.date).getTime() : timeA;
+      let dateB = b.date ? new Date(b.date).getTime() : timeB;
+      
+      if (dateA === dateB) return timeB - timeA; 
+      return dateB - dateA;
+    });
+
+    const recentTbody = document.querySelector('#recent-matches-table tbody');
+    recentTbody.innerHTML = '';
+
+    if (matchesArray.length === 0) {
+      recentTbody.innerHTML = '<tr><td colspan="4" style="color:#7f8c8d; padding: 20px;">Zatiaľ žiadne odohraté zápasy.</td></tr>';
+      return;
+    }
+
+    const recentMatches = matchesArray.slice(0, 15);
+    recentMatches.forEach(match => {
+      const tr = document.createElement('tr');
+      
+      let winnerName, loserName, winnerScore, loserScore;
+      if (match.score1 > match.score2) {
+        winnerName = `<strong>${match.player1}</strong>`;
+        loserName = match.player2;
+        winnerScore = match.score1;
+        loserScore = match.score2;
+      } else {
+        winnerName = `<strong>${match.player2}</strong>`;
+        loserName = match.player1;
+        winnerScore = match.score2;
+        loserScore = match.score1;
+      }
+
+      let displayDate = match.date;
+      if(match.date) {
+        const parts = match.date.split('-');
+        if(parts.length === 3) {
+           displayDate = `${parts[2]}.${parts[1]}.${parts[0]}`; 
+        }
+      }
+
+      tr.innerHTML = `
+        <td><span class="score-box" style="font-weight:bold; color:var(--text-muted); font-size: 0.9em;">${displayDate}</span></td>
+        <td>${winnerName} vs ${loserName} <br><small style="color:#95a5a6;">Zápas #${match.matchNumber || match.key.split('_')[2]}</small></td>
+        <td><span class="score-box" style="font-weight:bold; color: var(--success);">${winnerScore} : ${loserScore}</span></td>
+        <td><button class="btn-delete" onclick="deleteMatch('${match.key}')">Zmazať</button></td>
+      `;
+      recentTbody.appendChild(tr);
+    });
+  }
+
+  async function deleteMatch(key) {
+    if (confirm("Naozaj chceš vymazať tento zápas?")) {
+      try {
+        await db.collection("zapas").doc(key).delete();
+      } catch (error) {
+        console.error("Chyba pri mazaní: ", error);
+        alert("Zápas sa nepodarilo vymazať.");
+      }
+    }
+  }
+
+  async function resetAllData() {
+    const heslo = prompt("Pre vymazanie sezóny zadaj administrátorské heslo:");
+    if (heslo === "488148") {
+      if (confirm("POZOR! Heslo je správne. Naozaj chceš vymazať ÚPLNE VŠETKY zápasy v databáze?")) {
+        try {
+          const snapshot = await db.collection("zapas").get();
+          const batch = db.batch();
+          snapshot.docs.forEach((doc) => {
+            batch.delete(doc.ref);
+          });
+          await batch.commit();
+          alert("Všetky dáta boli úspešne vymazané zo servera.");
+        } catch(e) {
+          console.error(e);
+          alert("Chyba pri hromadnom mazaní dát!");
+        }
+      }
+    } else if (heslo !== null) { 
+      alert("Nesprávne heslo! Dáta neboli vymazané.");
+    }
+  }
+
+  window.onload = init;
+</script>
+</body>
+</html>
